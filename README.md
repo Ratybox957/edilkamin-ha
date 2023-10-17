@@ -1,4 +1,4 @@
-# Edilkamin for Home Assistant
+#[Dev] Edilkamin for Home Assistant
 
 ![example_integration](doc/edilkamin.png)
 
@@ -37,7 +37,7 @@ _Pay attention_ : If the API changes, I cannot guarantee that the integration wi
 
 ### Installation via Home Assistant Community Store (HACS)
 1. Ensure HACS is installed.
-1. Add this repo (https://github.com/algra4/ha-edilkamin) has custom repo ([HACS how-to](https://hacs.xyz/docs/faq/custom_repositories))
+1. Add this repo (https://github.com/Ratybox957/edilkamin-ha) has custom repo ([HACS how-to](https://hacs.xyz/docs/faq/custom_repositories))
 1. Search for and install the "Edilkamin" integration
 2. Restart Home Assistant
 3. In the home assistant configuration screen click on Integrations.
