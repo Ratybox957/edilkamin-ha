@@ -1,6 +1,6 @@
 """Constants for the Edilkamin integration."""
 
-DOMAIN = "edilkamin"
+DOMAIN = "edilkaminV2"
 
 MAC_ADDRESS = "mac_address"
 REFRESH_TOKEN = "refresh_token"
