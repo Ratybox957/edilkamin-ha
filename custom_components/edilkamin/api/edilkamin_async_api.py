@@ -146,6 +146,11 @@ class EdilkaminAsyncApi:
         response = await self.execute_get_request()
         result = response.get("status").get("state").get("actual_power")
         return result
+    
+    async def set_power_level(self, value):
+        """Set the power level."""
+        _LOGGER.debug("Set power level to %s", value)
+        await self.execute_put_request("power_level", value)
 
     async def get_alarms(self):
         """Get the target temperature."""
