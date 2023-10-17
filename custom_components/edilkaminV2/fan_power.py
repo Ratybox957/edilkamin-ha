@@ -13,7 +13,7 @@ from homeassistant.util.percentage import (
 )
 
 from .const import DOMAIN
-from custom_components.edilkaminV2.api.edilkamin_async_api import EdilkaminAsyncApi, HttpException
+from custom_components.edilkaminv2.api.edilkamin_async_api import EdilkaminAsyncApi, HttpException
 
 _LOGGER = logging.getLogger(__name__)
 
