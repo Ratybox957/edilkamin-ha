@@ -130,8 +130,6 @@ class EdilkaminClimateEntity(ClimateEntity):
                 self._hvac_mode = HVACMode.HEAT
             else:
                 self._hvac_mode = HVACMode.OFF
-            
-
         except HttpException as err:
             _LOGGER.error(str(err))
             return
@@ -140,7 +138,7 @@ class EdilkaminClimateEntity(ClimateEntity):
         """Set new target hvac mode."""
         
         _LOGGER.info("Setting operation mode to %s", hvac_mode)
-        self.async_write_ha_state()
+        
         if hvac_mode not in CLIMATE_HVAC_MODE_MANAGED:
             raise ValueError(f"Unsupported HVAC mode: {hvac_mode}")
 
@@ -149,11 +147,9 @@ class EdilkaminClimateEntity(ClimateEntity):
         if hvac_mode == HVACMode.HEAT :
             return await self.async_turn_on()
         _LOGGER.error(hvac_mode)
-        
+        self.async_write_ha_state()
 
-        
-
-
+ 
     async def async_set_preset_mode(self, preset_mode):
         """Set new preset mode."""
         if preset_mode not in ["1", "2", "3", "4", "5"]:
@@ -170,13 +166,23 @@ class EdilkaminClimateEntity(ClimateEntity):
     async def async_turn_on(self):
         """Turn on."""
         _LOGGER.debug("Turning %s on", self.unique_id)
-        await self.api.enable_power()
+        
+        try:
+            await self.api.enable_power()
+        except HttpException as err:
+            _LOGGER.error(str(err))
+            return
 
 
     async def async_turn_off(self):
         """Turn off."""
         _LOGGER.debug("Turning %s off", self.unique_id)
-        await self.api.disable_power()
+        try:
+            await self.api.disable_power()
+        except HttpException as err:
+            _LOGGER.error(str(err))
+            return
+        
         self.async_write_ha_state()
 
 
