@@ -13,7 +13,7 @@ from custom_components.edilkaminv2.api.edilkamin_async_api import (
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[str] = ["sensor", "binary_sensor", "switch", "fan", "climate", "fan_power"]
+PLATFORMS: list[str] = ["sensor", "binary_sensor", "switch", "fan", "climate"]#, "fan_power"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
