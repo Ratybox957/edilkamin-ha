@@ -9,7 +9,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN
-from custom_components.edilkamin.api.edilkamin_async_api import EdilkaminAsyncApi, HttpException
+from custom_components.edilkaminv2.api.edilkamin_async_api import EdilkaminAsyncApi, HttpException
 
 _LOGGER = logging.getLogger(__name__)
 

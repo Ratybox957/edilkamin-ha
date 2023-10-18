@@ -10,7 +10,7 @@ from homeassistant.components.climate import (
 from homeassistant.const import TEMP_CELSIUS, ATTR_TEMPERATURE
 
 from .const import DOMAIN
-from custom_components.edilkamin.api.edilkamin_async_api import (
+from custom_components.edilkaminv2.api.edilkamin_async_api import (
     EdilkaminAsyncApi,
     HttpException,
 )

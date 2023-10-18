@@ -13,7 +13,7 @@ from homeassistant.util.percentage import (
 )
 
 from .const import DOMAIN
-from custom_components.edilkamin.api.edilkamin_async_api import EdilkaminAsyncApi, HttpException
+from custom_components.edilkaminv2.api.edilkamin_async_api import EdilkaminAsyncApi, HttpException
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,10 +24,10 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
     """Add sensors for passed config_entry in HA."""
     async_api = hass.data[DOMAIN][config_entry.entry_id]
 
-    async_add_devices([EdilkaminPowerLevel(async_api)])
+    async_add_devices([EdilkaminFan(async_api)])
 
 
-class EdilkaminPowerLevel(FanEntity):
+class EdilkaminFan(FanEntity):
     """Representation of a Fan."""
 
     def __init__(self, api: EdilkaminAsyncApi):
@@ -41,7 +41,7 @@ class EdilkaminPowerLevel(FanEntity):
     @property
     def unique_id(self):
         """Return a unique_id for this entity."""
-        return f"{self.mac_address}_power_level_1"
+        return f"{self.mac_address}_fan1"
 
 
     @property
@@ -70,7 +70,7 @@ class EdilkaminPowerLevel(FanEntity):
             percentage_to_ranged_value(SPEED_RANGE, percentage)
         )
 
-        await self.api.set_power_level(self.current_speed)
+        await self.api.set_fan_1_speed(self.current_speed)
         self.schedule_update_ha_state()
 
     async def async_update(self) -> None:
@@ -78,7 +78,7 @@ class EdilkaminPowerLevel(FanEntity):
         try:
             self.current_state = await self.api.get_power_status()
             if self.current_state is True:
-                self.current_speed = await self.api.get_actual_power()
+                self.current_speed = await self.api.get_fan_1_speed()
         except HttpException as err:
             _LOGGER.error(str(err))
             return

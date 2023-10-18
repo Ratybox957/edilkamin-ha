@@ -7,7 +7,7 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from custom_components.edilkamin.api.edilkamin_async_api import (
+from custom_components.edilkaminv2.api.edilkamin_async_api import (
     EdilkaminAsyncApi,
     HttpException,
 )

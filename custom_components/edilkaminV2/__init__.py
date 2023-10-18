@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN, MAC_ADDRESS, REFRESH_TOKEN, CLIENT_ID
-from custom_components.edilkamin.api.edilkamin_async_api import (
+from custom_components.edilkaminv2.api.edilkamin_async_api import (
     EdilkaminAsyncApi,
 )
 

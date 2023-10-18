@@ -1,9 +1,9 @@
 {
-  "domain": "edilkamin",
-  "name": "Edilkamin",
+  "domain": "edilkaminv2",
+  "name": "EdilkaminV2",
   "config_flow": true,
   "integration_type": "hub",
-  "documentation": "https://github.com/algra4/edilkamin",
+  "documentation": "https://github.com/Ratybox957/edilkamin-ha",
   "requirements": [],
   "ssdp": [],
   "zeroconf": [],
