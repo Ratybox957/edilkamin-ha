@@ -103,7 +103,7 @@ class EdilkaminClimateEntity(ClimateEntity):
     async def async_set_fan_mode(self, fan_mode):
         """Set new target fan mode."""
         try:
-            await self.api.set_fan_1_speed(fan_mode)
+            await self.api.set_fan_1_speed(int(fan_mode))
         except HttpException as err:
             _LOGGER.error(str(err))
             return
@@ -121,9 +121,9 @@ class EdilkaminClimateEntity(ClimateEntity):
         try:
             self._current_temperature = await self.api.get_temperature()
             self._target_temperature = await self.api.get_target_temperature()
-            self._fan1_speed = await self.api.get_fan_1_speed()
-            self._power_level = await self.api.get_actual_power()
-            self._preset_mode = self._power_level
+            self._fan1_speed = str(await self.api.get_fan_1_speed_settings())
+            self._power_level = await self.api.get_power_level_settings()
+            self._preset_mode = str(self._power_level)
         
             power = await self.api.get_power_status()
             if power is True:
@@ -138,8 +138,9 @@ class EdilkaminClimateEntity(ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new target hvac mode."""
-        _LOGGER.error(hvac_mode)
-
+        
+        _LOGGER.info("Setting operation mode to %s", hvac_mode)
+        self.async_write_ha_state()
         if hvac_mode not in CLIMATE_HVAC_MODE_MANAGED:
             raise ValueError(f"Unsupported HVAC mode: {hvac_mode}")
 
@@ -147,20 +148,23 @@ class EdilkaminClimateEntity(ClimateEntity):
             return await self.async_turn_off()
         if hvac_mode == HVACMode.HEAT :
             return await self.async_turn_on()
-        
+        _LOGGER.error(hvac_mode)
         
 
-        _LOGGER.info("Setting operation mode to %s", hvac_mode)
-        self.async_write_ha_state()
+        
 
 
     async def async_set_preset_mode(self, preset_mode):
         """Set new preset mode."""
-        _LOGGER.error(preset_mode)
-
         if preset_mode not in ["1", "2", "3", "4", "5"]:
             raise ValueError(f"Unsupported preset mode: {preset_mode}")
-        await self.async_set_power(preset_mode)
+        
+        try:
+            await self.async_set_power(preset_mode)
+        except HttpException as err:
+            _LOGGER.error(str(err))
+            return
+        
         self.async_write_ha_state()
         
     async def async_turn_on(self):
@@ -180,7 +184,7 @@ class EdilkaminClimateEntity(ClimateEntity):
         """Turn off."""
         _LOGGER.debug("set power level %s", power_level)
         try:
-            await self.api.set_power_level(power_level)
+            await self.api.set_power_level(int(power_level))
         except HttpException as err:
             _LOGGER.error(str(err))
             return
