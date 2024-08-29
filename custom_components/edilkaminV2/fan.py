@@ -165,3 +165,5 @@ class EdilkaminFan2(FanEntity):
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the entity."""
+        await self.api.set_fan_2_speed(0)
+        self.schedule_update_ha_state()
