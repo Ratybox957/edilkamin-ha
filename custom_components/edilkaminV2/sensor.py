@@ -29,6 +29,7 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
         [
             EdilkaminTemperatureSensor(async_api),
             EdilkaminFan1Sensor(async_api),
+            EdilkaminFan2Sensor(async_api),
             EdilkaminAlarmSensor(async_api),
             EdilkaminActualPowerSensor(async_api),
         ]
@@ -72,7 +73,6 @@ class EdilkaminTemperatureSensor(SensorEntity):
             _LOGGER.error(str(err))
             return
 
-
 class EdilkaminFan1Sensor(SensorEntity):
     """Representation of a Sensor."""
 
@@ -105,6 +105,40 @@ class EdilkaminFan1Sensor(SensorEntity):
         except HttpException as err:
             _LOGGER.error(str(err))
             return
+
+class EdilkaminFan2Sensor(SensorEntity):
+    """Representation of a Sensor."""
+
+    def __init__(self, api: EdilkaminAsyncApi):
+        """Initialize the sensor."""
+        self._state = None
+        self.api = api
+        self.mac_address = api.get_mac_address()
+        self._attr_icon = "mdi:fan"
+
+    @property
+    def device_class(self):
+        """Return the class of this device, from component DEVICE_CLASSES."""
+        return DEVICE_CLASS_POWER
+
+    @property
+    def unique_id(self):
+        """Return a unique_id for this entity."""
+        return f"{self.mac_address}_fan2_sensor"
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return self._state
+
+    async def async_update(self) -> None:
+        """Fetch new state data for the sensor."""
+        try:
+            self._state = await self.api.get_fan_2_speed()
+        except HttpException as err:
+            _LOGGER.error(str(err))
+            return
+            
 
 
 class EdilkaminAlarmSensor(SensorEntity):
