@@ -36,6 +36,7 @@ class EdilkaminClimateEntity(ClimateEntity):
         self._current_temperature = None
         self._target_temperature = None
         self._fan1_speed = None
+        self._fan2_speed = None
         self._hvac_mode = None
         self.api = api
         self.mac_address = api.get_mac_address()
@@ -76,7 +77,15 @@ class EdilkaminClimateEntity(ClimateEntity):
     def fan_modes(self):
         """List of available fan modes."""
         return ["1", "2", "3", "4", "5"]
+    @property
+    def fan2_mode(self):
+        """Returns the current fan mode.."""
+        return self._fan2_speed
 
+    @property
+    def fan2_modes(self):
+        """List of available fan modes."""
+        return ["0", "1", "2", "3", "4", "5"]
     @property
     def target_temperature(self):
         """The current temperature."""
@@ -95,7 +104,15 @@ class EdilkaminClimateEntity(ClimateEntity):
             _LOGGER.error(str(err))
             return
         self.async_write_ha_state()
-
+    
+    async def async_set_fan2_mode(self, fan_mode):
+        """Set new target fan mode."""
+        try:
+            await self.api.set_fan_2_speed(fan_mode)
+        except HttpException as err:
+            _LOGGER.error(str(err))
+            return
+        self.async_write_ha_state()
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
         if kwargs.get(ATTR_TEMPERATURE) is not None:
