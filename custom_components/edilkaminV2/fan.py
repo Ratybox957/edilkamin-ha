@@ -5,7 +5,7 @@ import logging
 import math
 
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.components.fan import SUPPORT_SET_SPEED, FanEntity
+from homeassistant.components.fan import SUPPORT_SET_SPEED, FanEntity, FanEntityFeature 
 from homeassistant.util.percentage import (
     int_states_in_range,
     percentage_to_ranged_value,
@@ -17,8 +17,8 @@ from custom_components.edilkaminv2.api.edilkamin_async_api import EdilkaminAsync
 
 _LOGGER = logging.getLogger(__name__)
 
-SPEED_RANGE = (1, 5)  # away is not included in speeds and instead mapped to off
-SPEED_RANGE_FAN2 = (0, 5)  # away is not included in speeds and instead mapped to off
+SPEED_RANGE = (1, 5)  # off is not included in speeds and instead mapped to off
+SPEED_RANGE_FAN2 = (1, 5)  # off is not included in speeds and instead mapped to off
 
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
@@ -39,6 +39,7 @@ class EdilkaminFan(FanEntity):
 
         self.current_speed = None
         self.current_state = False
+        
 
     @property
     def unique_id(self):
@@ -101,6 +102,7 @@ class EdilkaminFan(FanEntity):
 class EdilkaminFan2(FanEntity):
     """Representation of a Fan."""
 
+
     def __init__(self, api: EdilkaminAsyncApi):
         """Initialize the fan."""
         self.api = api
@@ -108,12 +110,17 @@ class EdilkaminFan2(FanEntity):
 
         self.current_speed = None
         self.current_state = False
+        self.preset_mode = None
 
     @property
     def unique_id(self):
         """Return a unique_id for this entity."""
         return f"{self.mac_address}_fan2"
 
+    @property
+    def preset_modes(self):
+        """Return preset modes."""
+        return ["0", "1", "2", "3", "4", "5"]
 
     @property
     def percentage(self) -> int | None:
@@ -123,7 +130,7 @@ class EdilkaminFan2(FanEntity):
 
         if self.current_speed is None:
             return None
-        return ranged_value_to_percentage(SPEED_RANGE_FAN2, self.current_speed)
+        return ranged_value_to_percentage(SPEED_RANGE_FAN2, self.current_speed) #self.current_speed * 100 / 5 
 
     @property
     def speed_count(self) -> int:
@@ -133,16 +140,22 @@ class EdilkaminFan2(FanEntity):
     @property
     def supported_features(self) -> int:
         """Flag supported features."""
-        return SUPPORT_SET_SPEED
+        return FanEntityFeature.SET_SPEED|FanEntityFeature.TURN_OFF|FanEntityFeature.PRESET_MODE
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed of the fan, as a percentage."""
         self.current_speed = math.ceil(
+            #percentage * 5 / 100
             percentage_to_ranged_value(SPEED_RANGE_FAN2, percentage)
         )
 
         await self.api.set_fan_2_speed(self.current_speed)
         self.schedule_update_ha_state()
+
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
+        """Set the preset mode of the fan."""
+        self.current_speed = preset_mode
+        
 
     async def async_update(self) -> None:
         """Fetch new state data for the sensor."""
