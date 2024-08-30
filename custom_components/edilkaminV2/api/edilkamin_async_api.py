@@ -125,7 +125,7 @@ class EdilkaminAsyncApi:
     async def set_fan_1_speed(self, value):
         """Set the speed of fan 1."""
         _LOGGER.debug("Set speed for fan 1 to %s", value)
-        await self.execute_put_request("fan_1_speed", value)
+        await self.execute_put_request("fan_1_speed", int(value))
 
     
     async def get_fan_2_speed(self):
@@ -137,7 +137,7 @@ class EdilkaminAsyncApi:
     async def set_fan_2_speed(self, value):
         """Set the speed of fan 2."""
         _LOGGER.debug("Set speed for fan 2 to %s", value)
-        await self.execute_put_request("fan_2_speed", value)
+        await self.execute_put_request("fan_2_speed", int(value))
 
     async def check(self):
         """Call check config."""
@@ -162,7 +162,7 @@ class EdilkaminAsyncApi:
     async def set_power_level(self, value):
         """Set the power level."""
         _LOGGER.debug("Set power level to %s", value)
-        await self.execute_put_request("power_level", value)
+        await self.execute_put_request("power_level", int(value))
 
     async def get_alarms(self):
         """Get the target temperature."""
