@@ -37,11 +37,13 @@ class EdilkaminClimateEntity(ClimateEntity):
         self._target_temperature = None
         self._fan1_speed = None
         self._fan2_speed = None
+        self._preset_mode = None
         self._hvac_mode = None
         self.api = api
         self.mac_address = api.get_mac_address()
         self._attr_max_temp = 24
         self._attr_min_temp = 14
+        
 
     @property
     def unique_id(self):
@@ -67,6 +69,17 @@ class EdilkaminClimateEntity(ClimateEntity):
     def hvac_modes(self) -> list[HVACMode]:
         """List of available operation modes."""
         return CLIMATE_HVAC_MODE_MANAGED
+    
+    @property
+    def preset_mode(self):
+        """Return preset modes."""
+        return self._preset_mode
+
+
+    @property
+    def preset_modes(self):
+        """list preset modes."""
+        return ["1", "2", "3", "4", "5"]
 
     @property
     def fan_mode(self):
@@ -94,7 +107,18 @@ class EdilkaminClimateEntity(ClimateEntity):
     @property
     def supported_features(self):
         """Bitmap of supported features"""
-        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
+        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.FAN_MODE 
+
+    async def async_set_preset_mode(self, preset_mode):
+        """Set the preset mode of the power"""
+        
+        self._preset_mode = preset_mode
+        try:
+            await self.api.set_power_level(preset_mode)
+        except HttpException as err:
+            _LOGGER.error(str(err))
+            return
+        self.async_write_ha_state()
 
     async def async_set_fan_mode(self, fan_mode):
         """Set new target fan mode."""
@@ -125,8 +149,9 @@ class EdilkaminClimateEntity(ClimateEntity):
         try:
             self._current_temperature = await self.api.get_temperature()
             self._target_temperature = await self.api.get_target_temperature()
+            self._preset_mode = await self.api.get_actual_power()
             self._fan1_speed = await self.api.get_fan_1_speed()
-
+            
             power = await self.api.get_power_status()
             if power is True:
                 self._hvac_mode = HVACMode.HEAT
@@ -139,7 +164,7 @@ class EdilkaminClimateEntity(ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new target hvac mode."""
-        _LOGGER.error(hvac_mode)
+        
 
         if hvac_mode not in CLIMATE_HVAC_MODE_MANAGED:
             raise ValueError(f"Unsupported HVAC mode: {hvac_mode}")
