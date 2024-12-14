@@ -40,7 +40,7 @@ class EdilkaminAsyncApi:
 
     def get_mac_address(self):
         """Get the mac address."""
-        return self.mac_address
+        return self._mac_address
 
 
     async def authenticate(self) -> bool:#
