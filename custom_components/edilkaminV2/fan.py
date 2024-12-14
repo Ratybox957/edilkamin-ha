@@ -5,7 +5,7 @@ import logging
 import math
 
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.components.fan import SUPPORT_SET_SPEED, FanEntity, FanEntityFeature 
+from homeassistant.components.fan import FanEntity, FanEntityFeature 
 from homeassistant.util.percentage import (
     int_states_in_range,
     percentage_to_ranged_value,
@@ -42,6 +42,7 @@ class EdilkaminFan(FanEntity):
         self.current_speed = None
         self.current_state = False
         
+        
 
     @property
     def unique_id(self):
@@ -67,7 +68,7 @@ class EdilkaminFan(FanEntity):
     @property
     def supported_features(self) -> int:
         """Flag supported features."""
-        return SUPPORT_SET_SPEED
+        return FanEntityFeature.SET_SPEED
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed of the fan, as a percentage."""
@@ -81,9 +82,9 @@ class EdilkaminFan(FanEntity):
     async def async_update(self) -> None:
         """Fetch new state data for the sensor."""
         try:
-            self.current_state = await self.api.get_power_status()
+            self.current_state = await self.api.get_fan_1_is_active()
             if self.current_state is True:
-                self.current_speed = await self.api.get_fan_1_speed()
+                self.current_speed = await self.api.get_fan_1_actual_setpoint()
         except HttpException as err:
             _LOGGER.error(str(err))
             return
@@ -113,6 +114,8 @@ class EdilkaminFan2(FanEntity):
         self.current_speed = None
         self.current_state = False
         self.preset_mode = None
+        self._percentage = 0
+        #self.is_on = False
 
     @property
     def unique_id(self):
@@ -122,16 +125,17 @@ class EdilkaminFan2(FanEntity):
     @property
     def preset_modes(self):
         """Return preset modes."""
-        return ["0", "1", "2", "3", "4", "5"]
+        return [ "0", "1", "2", "3", "4", "5"]
 
     @property
-    def percentage(self) -> int | None:
+    def percentage(self) -> Optional[int]:
         """Return the current speed percentage."""
         if self.current_state is False:
             return None
 
-        if self.current_speed is None:
-            return None
+        if self.current_speed is None or self.current_speed == 0 :
+            return 0
+        
         return ranged_value_to_percentage(SPEED_RANGE_FAN2, self.current_speed) #self.current_speed * 100 / 5 
 
     @property
@@ -150,27 +154,58 @@ class EdilkaminFan2(FanEntity):
             #percentage * 5 / 100
             percentage_to_ranged_value(SPEED_RANGE_FAN2, percentage)
         )
-
+        if self.current_speed == 0:
+            #self.preset_mode = None
+            self.preset_mode = "0"
+            
         await self.api.set_fan_2_speed(self.current_speed)
         self.schedule_update_ha_state()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of the fan."""
-        self.current_speed = preset_mode
-        self.preset_mode = preset_mode
+        self.current_speed = int(preset_mode)
+        
+                
         if preset_mode == "0":
             self.current_state = False
+            #self.preset_mode = None
+            self.preset_mode = str(preset_mode)
+            self.current_speed = 0
+            self._percentage = 0
+            #self.is_on = False
+        else :
+            self.preset_mode = str(preset_mode)
+            self._percentage = ranged_value_to_percentage(SPEED_RANGE_FAN2, self.current_speed)
+        
         
         await self.api.set_fan_2_speed(self.current_speed)
         self.schedule_update_ha_state()
+        
 
     async def async_update(self) -> None:
         """Fetch new state data for the sensor."""
         try:
-            self.current_state = await self.api.get_power_status()
-            if self.current_state is True:
-                self.current_speed = await self.api.get_fan_2_speed()
-                self.preset_mode = str(self.current_speed)
+            self.current_state = await self.api.get_fan_2_is_active()
+            self.current_speed = await self.api.get_fan_2_actual_setpoint()
+            temp_preset_mode = str(self.current_speed)
+            
+            
+            if temp_preset_mode == "0":
+                #self.preset_mode = None
+                self.preset_mode =  temp_preset_mode
+
+                self._percentage = 0
+            else :
+                self.preset_mode = temp_preset_mode
+                self._percentage = ranged_value_to_percentage(SPEED_RANGE_FAN2, self.current_speed)
+                
+            if self.current_state is True or self.current_state == "true":
+                self.current_state = False
+                #self.is_on = True
+            else :
+                self.current_state = False
+                
+                #self.is_on = False
         except HttpException as err:
             _LOGGER.error(str(err))
             return
@@ -184,11 +219,15 @@ class EdilkaminFan2(FanEntity):
     ) -> None:
         """Turn on the entity."""
 
+        
+
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the entity."""
         await self.api.set_fan_2_speed(0)
         self.current_state = False
+        #self.is_on = False
         self.preset_mode = "0"
+        
         self.schedule_update_ha_state()
 
 

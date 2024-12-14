@@ -7,7 +7,7 @@ from homeassistant.components.climate import (
     HVACMode,
     ClimateEntityFeature,
 )
-from homeassistant.const import TEMP_CELSIUS, ATTR_TEMPERATURE
+from homeassistant.const import UnitOfTemperature, ATTR_TEMPERATURE
 
 from .const import DOMAIN
 from custom_components.edilkaminv2.api.edilkamin_async_api import (
@@ -53,7 +53,7 @@ class EdilkaminClimateEntity(ClimateEntity):
     @property
     def temperature_unit(self):
         """The unit of temperature measurement"""
-        return TEMP_CELSIUS
+        return UnitOfTemperature.CELSIUS
 
     @property
     def current_temperature(self):
@@ -84,7 +84,7 @@ class EdilkaminClimateEntity(ClimateEntity):
     @property
     def fan_mode(self):
         """Returns the current fan mode.."""
-        return self._fan1_speed
+        return str(self._fan1_speed)
 
     @property
     def fan_modes(self):
@@ -112,9 +112,9 @@ class EdilkaminClimateEntity(ClimateEntity):
     async def async_set_preset_mode(self, preset_mode):
         """Set the preset mode of the power"""
         
-        self._preset_mode = preset_mode
+        self._preset_mode = str(preset_mode)
         try:
-            await self.api.set_power_level(preset_mode)
+            await self.api.set_power_level(int(preset_mode))
         except HttpException as err:
             _LOGGER.error(str(err))
             return
@@ -122,8 +122,9 @@ class EdilkaminClimateEntity(ClimateEntity):
 
     async def async_set_fan_mode(self, fan_mode):
         """Set new target fan mode."""
+        self._fan1_speed = str(fan_mode)
         try:
-            await self.api.set_fan_1_speed(fan_mode)
+            await self.api.set_fan_1_speed(int(fan_mode))
         except HttpException as err:
             _LOGGER.error(str(err))
             return
@@ -149,8 +150,8 @@ class EdilkaminClimateEntity(ClimateEntity):
         try:
             self._current_temperature = await self.api.get_temperature()
             self._target_temperature = await self.api.get_target_temperature()
-            self._preset_mode = await self.api.get_actual_power()
-            self._fan1_speed = await self.api.get_fan_1_speed()
+            self._preset_mode = str(await self.api.get_power_actual_setpoint())
+            self._fan1_speed = await self.api.get_fan_1_actual_setpoint()
             
             power = await self.api.get_power_status()
             if power is True:

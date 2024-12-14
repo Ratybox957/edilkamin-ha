@@ -17,7 +17,7 @@ from custom_components.edilkaminv2.api.edilkamin_async_api import EdilkaminAsync
 
 _LOGGER = logging.getLogger(__name__)
 
-SPEED_RANGE = (1, 5)  # away is not included in speeds and instead mapped to off
+POWER_RANGE = (1, 5)  # away is not included in speeds and instead mapped to off
 
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
@@ -52,22 +52,22 @@ class EdilkaminPowerLevel(FanEntity):
 
         if self.current_speed is None:
             return None
-        return ranged_value_to_percentage(SPEED_RANGE, self.current_speed)
+        return ranged_value_to_percentage(POWER_RANGE, self.current_speed)
 
     @property
     def speed_count(self) -> int:
         """Return the number of speeds the fan supports."""
-        return int_states_in_range(SPEED_RANGE)
+        return int_states_in_range(POWER_RANGE)
 
     @property
     def supported_features(self) -> int:
         """Flag supported features."""
-        return SUPPORT_SET_SPEED
+        return FanEntityFeature.SET_SPEED
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed of the fan, as a percentage."""
         self.current_speed = math.ceil(
-            percentage_to_ranged_value(SPEED_RANGE, percentage)
+            percentage_to_ranged_value(POWER_RANGE, percentage)
         )
 
         await self.api.set_power_level(self.current_speed)

@@ -2,24 +2,31 @@
 from __future__ import annotations
 
 import logging
+from typing import Any#
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+##from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from custom_components.edilkaminv2.api.edilkamin_async_api import (
     EdilkaminAsyncApi,
-    HttpException,
+    ##HttpException,
 )
 
-from typing import Any
+##from typing import Any
 
-from .const import DOMAIN, MAC_ADDRESS, REFRESH_TOKEN, CLIENT_ID
+##from .const import DOMAIN, MAC_ADDRESS, REFRESH_TOKEN, CLIENT_ID
+from .const import DOMAIN, MAC_ADDRESS, USERNAME, PASSWORD#
 
 _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
-    {vol.Required(MAC_ADDRESS): str, vol.Required(CLIENT_ID): str, vol.Required(REFRESH_TOKEN): str}
+    ##{vol.Required(MAC_ADDRESS): str, vol.Required(CLIENT_ID): str, vol.Required(REFRESH_TOKEN): str}
+    {#
+        vol.Required(MAC_ADDRESS): str,#
+        vol.Required(USERNAME): str,#
+        vol.Required(PASSWORD): str,#
+    }#
 )
 
 
@@ -30,20 +37,26 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     """
 
     mac_address = data[MAC_ADDRESS]
-    refresh_token = data[REFRESH_TOKEN]
-    client_id = data[CLIENT_ID]
+    username = data[USERNAME]#
+    password = data[PASSWORD]#
+    ##refresh_token = data[REFRESH_TOKEN]
+    ##client_id = data[CLIENT_ID]
 
     api = EdilkaminAsyncApi(
         mac_address=mac_address,
-        session=async_get_clientsession(hass),
-        refresh_token=refresh_token,
-        client_id=client_id
+        username=username,#
+        password=password,#
+        hass=hass#
+        ##session=async_get_clientsession(hass),
+        ##refresh_token=refresh_token,
+        ##client_id=client_id
     )
-
-    try:
-        await api.check()
-    except HttpException:
-        raise CannotConnect
+    if not await api.authenticate():#
+        raise InvalidAuth#
+    ##try:
+        ##await api.check()
+    ##except HttpException:
+        ##raise CannotConnect
 
     # Return info that you want to store in the config entry.
     return {"title": mac_address.replace(":", "")}
@@ -52,7 +65,8 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Edilkamin."""
 
-    VERSION = 1
+    ##VERSION = 1
+    VERSION = 2#
 
 
     async def async_step_user(self, user_input):
@@ -71,8 +85,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except Exception:
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
-            else:
-                return self.async_create_entry(title=info["title"], data=user_input)
+            ##else:
+                ##return self.async_create_entry(title=info["title"], data=user_input)
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
@@ -82,6 +96,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
 
+class InvalidAuth(HomeAssistantError):
+    """Error to indicate there is invalid auth."""
 
 class InvalidMacAddress(HomeAssistantError):
     """Error to indicate there is invalid mac address."""

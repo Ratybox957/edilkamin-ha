@@ -5,11 +5,13 @@ import logging
 import time
 from typing import Any
 
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import (
-    DEVICE_CLASS_POWER,
-    DEVICE_CLASS_TEMPERATURE,
-    TEMP_CELSIUS,
+from homeassistant.const import UnitOfTemperature
+
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -48,12 +50,12 @@ class EdilkaminTemperatureSensor(SensorEntity):
     @property
     def device_class(self):
         """Return the class of this device, from component DEVICE_CLASSES."""
-        return DEVICE_CLASS_TEMPERATURE
+        return SensorDeviceClass.TEMPERATURE
 
     @property
     def native_unit_of_measurement(self):
         """Return the class of this device, from component DEVICE_CLASSES."""
-        return TEMP_CELSIUS
+        return UnitOfTemperature.CELSIUS
 
     @property
     def unique_id(self):
@@ -86,7 +88,7 @@ class EdilkaminFan1Sensor(SensorEntity):
     @property
     def device_class(self):
         """Return the class of this device, from component DEVICE_CLASSES."""
-        return DEVICE_CLASS_POWER
+        return SensorDeviceClass.POWER
 
     @property
     def unique_id(self):
@@ -119,7 +121,7 @@ class EdilkaminFan2Sensor(SensorEntity):
     @property
     def device_class(self):
         """Return the class of this device, from component DEVICE_CLASSES."""
-        return DEVICE_CLASS_POWER
+        return SensorDeviceClass.POWER
 
     @property
     def unique_id(self):
@@ -155,7 +157,7 @@ class EdilkaminAlarmSensor(SensorEntity):
     @property
     def device_class(self):
         """Return the class of this device, from component DEVICE_CLASSES."""
-        return DEVICE_CLASS_POWER
+        return SensorDeviceClass.POWER
 
     @property
     def unique_id(self):
@@ -210,7 +212,7 @@ class EdilkaminActualPowerSensor(SensorEntity):
     @property
     def device_class(self):
         """Return the class of this device, from component DEVICE_CLASSES."""
-        return DEVICE_CLASS_POWER
+        return SensorDeviceClass.POWER
 
     @property
     def native_unit_of_measurement(self):
