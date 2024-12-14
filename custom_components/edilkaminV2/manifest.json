@@ -6,7 +6,7 @@
   "documentation": "https://github.com/Ratybox957/edilkamin-ha",
   
   "requirements": [
-    
+    "edilkamin==1.4.1"
   ],
   "ssdp": [],
   "zeroconf": [],
