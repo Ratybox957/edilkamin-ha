@@ -42,7 +42,7 @@ class EdilkaminFan(FanEntity):
         self.current_speed = None
         self.current_state = False
         self._attr_name = "Fan 1"
-        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
         
         
 
@@ -118,7 +118,7 @@ class EdilkaminFan2(FanEntity):
         self.preset_mode = None
         self._percentage = 0
         self._attr_name = "Fan 2"
-        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
         #self.is_on = False
 
     @property

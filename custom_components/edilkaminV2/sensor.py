@@ -55,7 +55,7 @@ class EdilkaminTemperatureSensor(CoordinatorEntity, SensorEntity):
         self._mac_address = self.coordinator.get_mac_address()
 
         self._attr_name = "Temperature"
-        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
         self._attr_icon = "mdi:thermometer"
 
     @property
@@ -93,7 +93,7 @@ class EdilkaminFan1Sensor(CoordinatorEntity,SensorEntity):
         self._mac_address = self.coordinator.get_mac_address()
         self._attr_icon = "mdi:fan"
         self._attr_name = "Fan 1"
-        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
 
     @property
     def device_class(self):
@@ -125,7 +125,7 @@ class EdilkaminFan2Sensor(CoordinatorEntity,SensorEntity):
         self._mac_address = self.coordinator.get_mac_address()
         self._attr_icon = "mdi:fan"
         self._attr_name = "Fan 2"
-        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
     @property
     def device_class(self):
         """Return the class of this device, from component DEVICE_CLASSES."""
@@ -158,7 +158,7 @@ class EdilkaminAlarmSensor(CoordinatorEntity, SensorEntity):
         self._attributes: dict[str, Any] = {}
 
         self._attr_name = "Nb alarms"
-        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
 
     @property
     def device_class(self):
@@ -209,7 +209,7 @@ class EdilkaminActualPowerSensor(CoordinatorEntity, SensorEntity):
         self._state = None
         self._mac_address = self.coordinator.get_mac_address()
         self._attr_name = "Actual power"
-        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
         self._attr_icon = "mdi:flash"
 
     @property

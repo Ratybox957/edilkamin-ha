@@ -45,7 +45,7 @@ class EdilkaminClimateEntity(ClimateEntity):
         self._attr_min_temp = 14
         
         self._attr_name = "Edilkamin climate"
-        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
 
     @property
     def unique_id(self):
