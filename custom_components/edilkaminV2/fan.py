@@ -37,7 +37,7 @@ class EdilkaminFan(FanEntity):
     def __init__(self, api: EdilkaminAsyncApi):
         """Initialize the fan."""
         self.api = api
-        self.mac_address = api.get_mac_address()
+        self._mac_address = api.get_mac_address()
 
         self.current_speed = None
         self.current_state = False
@@ -111,7 +111,7 @@ class EdilkaminFan2(FanEntity):
     def __init__(self, api: EdilkaminAsyncApi):
         """Initialize the fan."""
         self.api = api
-        self.mac_address = api.get_mac_address()
+        self._mac_address = api.get_mac_address()
 
         self.current_speed = None
         self.current_state = False
@@ -124,7 +124,7 @@ class EdilkaminFan2(FanEntity):
     @property
     def unique_id(self):
         """Return a unique_id for this entity."""
-        return f"{self.mac_address}_fan2"
+        return f"{self._mac_address}_fan2"
 
     @property
     def preset_modes(self):
