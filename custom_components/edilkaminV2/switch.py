@@ -103,6 +103,7 @@ class EdilkaminRelaxSwitch(CoordinatorEntity, SwitchEntity):
 
     def __init__(self, api: EdilkaminAsyncApi, coordinator) -> None:
         """Initialize the sensor."""
+        super().__init__(coordinator)
         self._state = None
         self._api = api
         self._mac_address = self.coordinator.get_mac_address()

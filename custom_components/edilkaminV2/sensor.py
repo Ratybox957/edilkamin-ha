@@ -30,18 +30,18 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
     sensors = [
         EdilkaminTemperatureSensor(coordinator),
         EdilkaminFan1Sensor(coordinator),
-        # EdilkaminFan2Sensor(coordinator),
+        EdilkaminFan2Sensor(coordinator),
         EdilkaminAlarmSensor(coordinator),
         EdilkaminActualPowerSensor(coordinator),
     ]
     
 
     nb_fans = coordinator.get_nb_fans()
-    if nb_fans > 1:
+    # if nb_fans > 1:
         
-        sensors.extend(
-            EdilkaminFan2Sensor(coordinator) #todo 3 fans ?
-        )
+    #     sensors.extend(
+    #         EdilkaminFan2Sensor(coordinator) #todo 3 fans ?
+    #     )
 
     async_add_devices(sensors)
 

@@ -49,7 +49,7 @@ class EdilkaminFan(FanEntity):
     @property
     def unique_id(self):
         """Return a unique_id for this entity."""
-        return f"{self.mac_address}_fan1"
+        return f"{self._mac_address}_fan1"
 
 
     @property
