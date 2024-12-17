@@ -40,15 +40,17 @@ class EdilkaminClimateEntity(ClimateEntity):
         self._preset_mode = None
         self._hvac_mode = None
         self.api = api
-        self.mac_address = api.get_mac_address()
+        self._mac_address = api.get_mac_address()
         self._attr_max_temp = 24
         self._attr_min_temp = 14
         
+        self._attr_name = "Edilkamin climate"
+        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
 
     @property
     def unique_id(self):
         """Return a unique_id for this entity."""
-        return f"{self.mac_address}_climate"
+        return f"{self._mac_address}_climate"
 
     @property
     def temperature_unit(self):

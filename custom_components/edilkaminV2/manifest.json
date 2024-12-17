@@ -2,19 +2,20 @@
   "domain": "edilkaminv2",
   "name": "EdilkaminV2",
   "config_flow": true,
-  "integration_type": "hub",
+  "integration_type": "device",
   "documentation": "https://github.com/Ratybox957/edilkamin-ha",
   
   "requirements": [
-    "edilkamin==1.4.1"
+    "edilkamin==1.4.1",
+    "macaddress==2.0.2"
   ],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
   "dependencies": [],
   "codeowners": [
-    "@algra4"
+    "@Ratybox957"
   ],
   "iot_class": "cloud_polling",
-  "version": "2.0.0"
+  "version": "3.1.1"
 }

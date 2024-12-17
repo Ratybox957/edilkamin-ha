@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Any#
+import macaddress
 import voluptuous as vol
+
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 ##from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from custom_components.edilkaminv2.api.edilkamin_async_api import (
@@ -13,91 +13,78 @@ from custom_components.edilkaminv2.api.edilkamin_async_api import (
     ##HttpException,
 )
 
-##from typing import Any
 
-##from .const import DOMAIN, MAC_ADDRESS, REFRESH_TOKEN, CLIENT_ID
 from .const import DOMAIN, MAC_ADDRESS, USERNAME, PASSWORD#
 
 _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
-    ##{vol.Required(MAC_ADDRESS): str, vol.Required(CLIENT_ID): str, vol.Required(REFRESH_TOKEN): str}
+    
     {#
-        vol.Required(MAC_ADDRESS): str,#
-        vol.Required(USERNAME): str,#
-        vol.Required(PASSWORD): str,#
+        vol.Required(MAC_ADDRESS): str,
+        vol.Required(USERNAME): str,
+        vol.Required(PASSWORD): str,
     }#
 )
 
-
-async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
-    """Validate the user input allows us to connect.
-
-    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
-    """
-
-    mac_address = data[MAC_ADDRESS]
-    username = data[USERNAME]#
-    password = data[PASSWORD]#
-    ##refresh_token = data[REFRESH_TOKEN]
-    ##client_id = data[CLIENT_ID]
-
-    api = EdilkaminAsyncApi(
-        mac_address=mac_address,
-        username=username,#
-        password=password,#
-        hass=hass#
-        ##session=async_get_clientsession(hass),
-        ##refresh_token=refresh_token,
-        ##client_id=client_id
-    )
-    if not await api.authenticate():#
-        raise InvalidAuth#
-    ##try:
-        ##await api.check()
-    ##except HttpException:
-        ##raise CannotConnect
-
-    # Return info that you want to store in the config entry.
-    return {"title": mac_address.replace(":", "")}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Edilkamin."""
 
-    ##VERSION = 1
-    VERSION = 2#
+    
+    VERSION = 2
 
 
     async def async_step_user(self, user_input):
         """Handle the initial step."""
-        errors = {}
+        errors: dict[str, str] = {}
 
         if user_input is not None:
+            mac_address = user_input[MAC_ADDRESS]
             try:
-                info = await validate_input(self.hass, user_input)
+                                macaddress.MAC(mac_address)
+            except ValueError as error:
+                _LOGGER.error("Invalid mac address: %s", error)
+                errors["base"] = "mac_address"
+                return self.async_show_form(
+                    step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+                )
 
-                return self.async_create_entry(title=info["title"], data=user_input)
-            except CannotConnect:
-                errors["base"] = "cannot_connect"
-            except InvalidMacAddress:
+            # Check if a stove with the same mac address is already configured
+            await self.async_set_unique_id(mac_address)
+            self._abort_if_unique_id_configured()
+
+            username = user_input[USERNAME]
+            password = user_input[PASSWORD]
+            api = EdilkaminAsyncApi(
+                mac_address=mac_address,
+                username=username,
+                password=password,
+                hass=self.hass,
+            )
+            try:
+                if await api.authenticate():
+                    return self.async_create_entry(
+                        title=mac_address.replace(":", ""), data=user_input
+                    )
+
                 errors["base"] = "invalid_auth"
-            except Exception:
-                _LOGGER.exception("Unexpected exception")
-                errors["base"] = "unknown"
-            ##else:
-                ##return self.async_create_entry(title=info["title"], data=user_input)
+            except Exception as exception:  # noqa: BLE001
+                exception_type = type(exception).__name__
+                _LOGGER.error("Exception type: %s", exception_type)
+                _LOGGER.error("Exception message: %s", exception)
+                if exception.__class__.__name__ == "NotAuthorizedException":
+                    errors["base"] = "invalid_auth"
+                else:
+                    errors["base"] = "unknown"
+
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
 
-class CannotConnect(HomeAssistantError):
-    """Error to indicate we cannot connect."""
-
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""
 
 class InvalidMacAddress(HomeAssistantError):
     """Error to indicate there is invalid mac address."""
