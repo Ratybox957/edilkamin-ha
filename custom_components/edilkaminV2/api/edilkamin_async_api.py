@@ -125,7 +125,7 @@ class EdilkaminAsyncApi:
     async def get_fan_1_actual_setpoint(self):
         """Get fan 1 setpoint."""
         _LOGGER.debug("Get fan 1 setpoint.")
-        return int(await self.get_info()).get("nvm").get("user_parameters").get("fan_1_ventilation")
+        return (await self.get_info()).get("nvm").get("user_parameters").get("fan_1_ventilation")
     
     async def get_fan_1_speed(self):
         """Get the speed of fan 1."""
@@ -143,7 +143,7 @@ class EdilkaminAsyncApi:
     async def get_fan_2_actual_setpoint(self):
         """Get fan 2 setpoint."""
         _LOGGER.debug("Get fan 2 setpoint.")
-        return int(await self.get_info()).get("nvm").get("user_parameters").get("fan_2_ventilation")
+        return (await self.get_info()).get("nvm").get("user_parameters").get("fan_2_ventilation")
 
     async def get_fan_2_speed(self):
         """Get the speed of fan 2."""
