@@ -5,7 +5,7 @@ import logging
 import math
 
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.components.fan import SUPPORT_SET_SPEED, FanEntity
+from homeassistant.components.fan import SUPPORT_SET_SPEED, FanEntity, FanEntityFeature
 from homeassistant.util.percentage import (
     int_states_in_range,
     percentage_to_ranged_value,
@@ -13,7 +13,8 @@ from homeassistant.util.percentage import (
 )
 
 from .const import DOMAIN
-from custom_components.edilkaminv2.api.edilkamin_async_api import EdilkaminAsyncApi, HttpException
+from custom_components.edilkaminv2.api.edilkamin_async_api import EdilkaminAsyncApi
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,26 +23,30 @@ POWER_RANGE = (1, 5)  # away is not included in speeds and instead mapped to off
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
     """Add sensors for passed config_entry in HA."""
+    coordinator = hass.data[DOMAIN]["coordinator"]
     async_api = hass.data[DOMAIN][config_entry.entry_id]
 
-    async_add_devices([EdilkaminPowerLevel(async_api)])
+    async_add_devices([EdilkaminPowerLevel(async_api, coordinator)])
 
 
-class EdilkaminPowerLevel(FanEntity):
+class EdilkaminPowerLevel(CoordinatorEntity, FanEntity):
     """Representation of a Fan."""
 
-    def __init__(self, api: EdilkaminAsyncApi):
+    def __init__(self, api: EdilkaminAsyncApi, coordinator) -> None:
         """Initialize the fan."""
+        super().__init__(coordinator)
         self.api = api
-        self.mac_address = api.get_mac_address()
+        self._mac_address = self.coordinator.get_mac_address()
 
         self.current_speed = None
         self.current_state = False
+        self._attr_name = "Power"
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
 
     @property
     def unique_id(self):
         """Return a unique_id for this entity."""
-        return f"{self.mac_address}_power_level_1"
+        return f"{self._mac_address}_power_level_1"
 
 
     @property
@@ -73,15 +78,14 @@ class EdilkaminPowerLevel(FanEntity):
         await self.api.set_power_level(self.current_speed)
         self.schedule_update_ha_state()
 
-    async def async_update(self) -> None:
+    def _handle_coordinator_update(self) -> None:   
         """Fetch new state data for the sensor."""
-        try:
-            self.current_state = await self.api.get_power_status()
-            if self.current_state is True:
-                self.current_speed = await self.api.get_actual_power()
-        except HttpException as err:
-            _LOGGER.error(str(err))
-            return
+        self.current_state = self.coordinator.get_power_status()
+        if self.current_state is True:
+            self.current_speed = self.coordinator.get_actual_power()
+
+        self.async_write_ha_state() 
+
 
     async def async_turn_on(
             self,

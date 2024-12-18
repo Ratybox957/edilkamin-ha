@@ -14,6 +14,7 @@ from custom_components.edilkaminv2.api.edilkamin_async_api import (
     EdilkaminAsyncApi,
     HttpException,
 )
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,17 +22,18 @@ CLIMATE_HVAC_MODE_MANAGED = [HVACMode.HEAT, HVACMode.OFF]
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
     """Add sensors for passed config_entry in HA."""
-
+    coordinator = hass.data[DOMAIN]["coordinator"]
     async_api = hass.data[DOMAIN][config_entry.entry_id]
 
-    async_add_devices([EdilkaminClimateEntity(async_api)])
+    async_add_devices([EdilkaminClimateEntity(async_api, coordinator)])
 
 
-class EdilkaminClimateEntity(ClimateEntity):
+class EdilkaminClimateEntity(CoordinatorEntity, ClimateEntity):
     """Representation of a Climate."""
 
-    def __init__(self, api: EdilkaminAsyncApi):
+    def __init__(self, api: EdilkaminAsyncApi, coordinator) -> None:
         """Initialize the climate."""
+        super().__init__(coordinator)
         self._state = None
         self._current_temperature = None
         self._target_temperature = None
@@ -40,7 +42,7 @@ class EdilkaminClimateEntity(ClimateEntity):
         self._preset_mode = None
         self._hvac_mode = None
         self.api = api
-        self._mac_address = api.get_mac_address()
+        self._mac_address = self.coordinator.get_mac_address()
         self._attr_max_temp = 24
         self._attr_min_temp = 14
         
@@ -147,23 +149,37 @@ class EdilkaminClimateEntity(ClimateEntity):
             await self.api.set_temperature(target_tmp)
         self.async_write_ha_state()
 
-    async def async_update(self) -> None:
+    def _handle_coordinator_update(self) -> None:   
         """Fetch new state data for the sensor."""
-        try:
-            self._current_temperature = await self.api.get_temperature()
-            self._target_temperature = await self.api.get_target_temperature()
-            self._preset_mode = str(await self.api.get_power_actual_setpoint())
-            self._fan1_speed = await self.api.get_fan_1_actual_setpoint()
-            
-            power = await self.api.get_power_status()
-            if power is True:
-                self._hvac_mode = HVACMode.HEAT
-            else:
-                self._hvac_mode = HVACMode.OFF
+        self._current_temperature = self.coordinator.get_temperature()
+        self._target_temperature = self.coordinator.get_target_temperature()
+        self._preset_mode = str(self.coordinator.get_power_actual_setpoint())
+        self._fan1_speed = self.coordinator.get_fan_1_actual_setpoint()
+        
+        power = self.coordinator.get_power_status()
+        if power is True:
+            self._hvac_mode = HVACMode.HEAT
+        else:
+            self._hvac_mode = HVACMode.OFF
+        self.async_write_ha_state()  
 
-        except HttpException as err:
-            _LOGGER.error(str(err))
-            return
+    # async def async_update(self) -> None:
+    #     """Fetch new state data for the sensor."""
+    #     try:
+    #         self._current_temperature = await self.api.get_temperature()
+    #         self._target_temperature = await self.api.get_target_temperature()
+    #         self._preset_mode = str(await self.api.get_power_actual_setpoint())
+    #         self._fan1_speed = await self.api.get_fan_1_actual_setpoint()
+            
+    #         power = await self.api.get_power_status()
+    #         if power is True:
+    #             self._hvac_mode = HVACMode.HEAT
+    #         else:
+    #             self._hvac_mode = HVACMode.OFF
+
+    #     except HttpException as err:
+    #         _LOGGER.error(str(err))
+    #         return
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new target hvac mode."""

@@ -1,16 +1,13 @@
 """Edilkamin async api."""
-##import json
+
 import logging
-##import asyncio
-##import async_timeout
-import typing#
-##import aiohttp
-##from aiohttp import ClientSession
 
-import edilkamin#
-from homeassistant.core import HomeAssistant#
+import typing
 
-##from custom_components.edilkamin.api.auth import Auth
+
+import edilkamin
+from homeassistant.core import HomeAssistant
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,13 +31,13 @@ class EdilkaminAsyncApi:
 
 
     async def authenticate(self) -> bool:#
-        try:#
-            await self._hass.async_add_executor_job(#
-                edilkamin.sign_in, self._username, self._password#
-            )#
-            return True#
-        except Exception:#
-            return False#
+        try:
+            await self._hass.async_add_executor_job(
+                edilkamin.sign_in, self._username, self._password
+            )
+            return True
+        except Exception:
+            return False
 
     async def get_temperature(self):
         """Get the temperature."""

@@ -82,6 +82,14 @@ class EdilkaminCoordinator(DataUpdateCoordinator):
             .get("fans")
             .get("fan_1_speed")
         )
+    def get_fan_1_actual_setpoint(self):
+        """Get fan 1 setpoint."""
+        return self._device_info.get("nvm").get("user_parameters").get("fan_1_ventilation")
+    
+    def get_fan_1_is_active(self):
+        """Get fan 1 is active."""
+        
+        return self._device_info.get("status").get("pump").get("flags2").get("fan_1_active")
     
     def get_fan_2_speed(self) -> str:
         """Get the fan speed."""
@@ -90,7 +98,15 @@ class EdilkaminCoordinator(DataUpdateCoordinator):
             .get("fans")
             .get("fan_2_speed")
         )
-
+    
+    def get_fan_2_actual_setpoint(self):
+        """Get fan 2 setpoint."""
+        return self._device_info.get("nvm").get("user_parameters").get("fan_2_ventilation")
+    
+    def get_fan_2_is_active(self):
+        """Get fan 1 is active."""
+        return self._device_info.get("status").get("pump").get("flags2").get("fan_2_active")
+    
     def get_nb_fans(self):
         """Get the number of fans."""
         return (
@@ -110,6 +126,10 @@ class EdilkaminCoordinator(DataUpdateCoordinator):
     def get_actual_power(self) -> str:
         """Get the actual power."""
         return self._device_info.get("status").get("state").get("actual_power")
+    
+    def get_power_actual_setpoint(self):
+        """Get power setpoint."""
+        return self._device_info.get("nvm").get("user_parameters").get("manual_power")
 
     def get_status_tank(self) -> str:
         """Get the status of the tank."""

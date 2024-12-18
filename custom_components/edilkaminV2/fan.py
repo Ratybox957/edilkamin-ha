@@ -13,7 +13,8 @@ from homeassistant.util.percentage import (
 )
 
 from .const import DOMAIN
-from custom_components.edilkaminv2.api.edilkamin_async_api import EdilkaminAsyncApi, HttpException
+from custom_components.edilkaminv2.api.edilkamin_async_api import EdilkaminAsyncApi
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,20 +25,22 @@ SPEED_RANGE_FAN2 = (1, 5)  # off is not included in speeds and instead mapped to
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
     """Add sensors for passed config_entry in HA."""
+    coordinator = hass.data[DOMAIN]["coordinator"]
     async_api = hass.data[DOMAIN][config_entry.entry_id]
 
-    async_add_devices([EdilkaminPowerLevel(async_api)])
-    async_add_devices([EdilkaminFan(async_api)])
-    async_add_devices([EdilkaminFan2(async_api)])
+    async_add_devices([EdilkaminPowerLevel(async_api, coordinator)])
+    async_add_devices([EdilkaminFan(async_api, coordinator)])
+    async_add_devices([EdilkaminFan2(async_api, coordinator)])
 
 
-class EdilkaminFan(FanEntity):
+class EdilkaminFan(CoordinatorEntity, FanEntity):
     """Representation of a Fan."""
 
-    def __init__(self, api: EdilkaminAsyncApi):
+    def __init__(self, api: EdilkaminAsyncApi, coordinator) -> None:
         """Initialize the fan."""
+        super().__init__(coordinator)
         self.api = api
-        self._mac_address = api.get_mac_address()
+        self._mac_address = self.coordinator.get_mac_address()
 
         self.current_speed = None
         self.current_state = False
@@ -80,16 +83,16 @@ class EdilkaminFan(FanEntity):
 
         await self.api.set_fan_1_speed(self.current_speed)
         self.schedule_update_ha_state()
-
-    async def async_update(self) -> None:
+    
+    def _handle_coordinator_update(self) -> None:   
         """Fetch new state data for the sensor."""
-        try:
-            self.current_state = await self.api.get_fan_1_is_active()
-            if self.current_state is True:
-                self.current_speed = await self.api.get_fan_1_actual_setpoint()
-        except HttpException as err:
-            _LOGGER.error(str(err))
-            return
+        
+        self.current_state = self.coordinator.get_fan_1_is_active()
+        if self.current_state is True:
+            self.current_speed = self.coordinator.get_fan_1_actual_setpoint()
+
+        self.async_write_ha_state() 
+
 
     async def async_turn_on(
             self,
@@ -104,14 +107,15 @@ class EdilkaminFan(FanEntity):
         """Turn off the entity."""
 
 
-class EdilkaminFan2(FanEntity):
+class EdilkaminFan2(CoordinatorEntity,FanEntity):
     """Representation of a Fan."""
 
 
-    def __init__(self, api: EdilkaminAsyncApi):
+    def __init__(self, api: EdilkaminAsyncApi, coordinator) -> None:
         """Initialize the fan."""
+        super().__init__(coordinator)
         self.api = api
-        self._mac_address = api.get_mac_address()
+        self._mac_address = self.coordinator.get_mac_address()
 
         self.current_speed = None
         self.current_state = False
@@ -186,33 +190,29 @@ class EdilkaminFan2(FanEntity):
         self.schedule_update_ha_state()
         
 
-    async def async_update(self) -> None:
+            
+    def _handle_coordinator_update(self) -> None:   
         """Fetch new state data for the sensor."""
-        try:
-            self.current_state = await self.api.get_fan_2_is_active()
-            self.current_speed = await self.api.get_fan_2_actual_setpoint()
-            temp_preset_mode = str(self.current_speed)
-            
-            
-            if temp_preset_mode == "0":
-                #self.preset_mode = None
-                self.preset_mode =  temp_preset_mode
+        
+        self.current_state = self.coordinator.get_fan_2_is_active()
+        self.current_speed = self.coordinator.get_fan_2_actual_setpoint()
+        temp_preset_mode = str(self.current_speed)
+        if temp_preset_mode == "0":
+            #self.preset_mode = None
+            self.preset_mode =  temp_preset_mode
 
-                self._percentage = 0
-            else :
-                self.preset_mode = temp_preset_mode
-                self._percentage = ranged_value_to_percentage(SPEED_RANGE_FAN2, self.current_speed)
-                
-            if self.current_state is True or self.current_state == "true":
-                self.current_state = False
-                #self.is_on = True
-            else :
-                self.current_state = False
-                
-                #self.is_on = False
-        except HttpException as err:
-            _LOGGER.error(str(err))
-            return
+            self._percentage = 0
+        else :
+            self.preset_mode = temp_preset_mode
+            self._percentage = ranged_value_to_percentage(SPEED_RANGE_FAN2, self.current_speed)
+            
+        if self.current_state is True or self.current_state == "true":
+            self.current_state = False
+            #self.is_on = True
+        else :
+            self.current_state = False
+        self.async_write_ha_state() 
+
 
     async def async_turn_on(
             self,
@@ -235,13 +235,14 @@ class EdilkaminFan2(FanEntity):
         self.schedule_update_ha_state()
 
 
-class EdilkaminPowerLevel(FanEntity):
+class EdilkaminPowerLevel(CoordinatorEntity, FanEntity):
     """Representation of a Fan."""
 
-    def __init__(self, api: EdilkaminAsyncApi):
+    def __init__(self, api: EdilkaminAsyncApi, coordinator) -> None:
         """Initialize the fan."""
+        super().__init__(coordinator)
         self.api = api
-        self.mac_address = api.get_mac_address()
+        self.mac_address = self.coordinator.get_mac_address()
 
         self.current_speed = None
         self.current_state = False
@@ -281,15 +282,15 @@ class EdilkaminPowerLevel(FanEntity):
         await self.api.set_power_level(self.current_speed)
         self.schedule_update_ha_state()
 
-    async def async_update(self) -> None:
+    def _handle_coordinator_update(self) -> None:   
         """Fetch new state data for the sensor."""
-        try:
-            self.current_state = await self.api.get_power_status()
-            if self.current_state is True:
-                self.current_speed = await self.api.get_actual_power()
-        except HttpException as err:
-            _LOGGER.error(str(err))
-            return
+
+        self.current_state = self.coordinator.get_power_status()
+        if self.current_state is True:
+            self.current_speed = self.coordinator.get_actual_power()
+        self.async_write_ha_state() 
+
+
 
     async def async_turn_on(
             self,
