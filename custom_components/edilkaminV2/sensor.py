@@ -19,6 +19,17 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+OPERATIONAL_STATES = {
+    0: "Off",
+    1: "Ignition",
+    2: "On",
+    3: "Shutdown",
+    4: "Cooling",
+    5: "Alarm",
+    6: "Final cleaning",
+    7: "Unknown",
+}
+
 
 # https://github.com/home-assistant/example-custom-config/blob/master/custom_components/detailed_hello_world_push/sensor.py
 async def async_setup_entry(hass, config_entry, async_add_devices):
@@ -33,6 +44,8 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
         EdilkaminFan2Sensor(coordinator),
         EdilkaminAlarmSensor(coordinator),
         EdilkaminActualPowerSensor(coordinator),
+        EdilkaminOperationalSensor(coordinator),
+        EdilkaminAutonomySensor(coordinator),
     ]
     
 
@@ -235,4 +248,91 @@ class EdilkaminActualPowerSensor(CoordinatorEntity, SensorEntity):
     def _handle_coordinator_update(self) -> None:
         """Fetch new state data for the sensor."""
         self._state = self.coordinator.get_actual_power()
+        self.async_write_ha_state()
+
+
+class EdilkaminOperationalSensor(CoordinatorEntity, SensorEntity):
+    """Representation of a Sensor."""
+
+    def __init__(self, coordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._state = None
+        self._mac_address = self.coordinator.get_mac_address()
+        self._attr_icon = "mdi:eye"
+        self._attributes: dict[str, Any] = {}
+
+        self._attr_name = "Operational phase"
+        self._attr_options = list(OPERATIONAL_STATES.values())
+        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+
+    @property
+    def device_class(self):
+        """Return the class of this device, from component DEVICE_CLASSES."""
+        return SensorDeviceClass.ENUM
+
+    @property
+    def unique_id(self):
+        """Return a unique_id for this entity."""
+        return f"{self._mac_address}_operational_phase_sensor"
+
+    def _handle_coordinator_update(self) -> None:
+        """Fetch new state data for the sensor."""
+        op_state = self.coordinator.get_operational_phase()
+
+        if op_state in OPERATIONAL_STATES:
+            self._attr_native_value = OPERATIONAL_STATES[op_state]
+        else:
+            # Error operational code unknown, shows only the code
+            self._attr_native_value = OPERATIONAL_STATES[7]
+
+        additional_att = {"value": op_state}
+        self._attr_extra_state_attributes = additional_att
+        self.async_write_ha_state()
+
+
+class EdilkaminAutonomySensor(CoordinatorEntity, SensorEntity):
+    """Representation of a Sensor."""
+
+    def __init__(self, coordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._state = None
+        self._mac_address = self.coordinator.get_mac_address()
+
+        self._attr_name = "Autonomy"
+        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_icon = "mdi:timer"
+
+        additional_att = {
+            "description": "Time remaining before the stove turns off if no pellets are added"
+        }
+        self._attr_extra_state_attributes = additional_att
+
+    @property
+    def device_class(self):
+        """Return the class of this device, from component DEVICE_CLASSES."""
+        return SensorDeviceClass.DURATION
+
+    @property
+    def native_unit_of_measurement(self):
+        """Return the class of this device, from component DEVICE_CLASSES."""
+        return "min"
+
+    @property
+    def unique_id(self):
+        """Return a unique_id for this entity."""
+        return f"{self._mac_address}_autonomy"
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return self._state
+
+    def _handle_coordinator_update(self) -> None:
+        """Fetch new state data for the sensor."""
+        autonomy_second = self.coordinator.get_autonomy_second()
+        # Convert seconds to minutes
+        minutes, sec = divmod(autonomy_second, 60)
+        self._state = f"{minutes}:{sec}"
         self.async_write_ha_state()
