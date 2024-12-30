@@ -22,6 +22,22 @@ _LOGGER = logging.getLogger(__name__)
 CLIMATE_HVAC_MODE_MANAGED = [HVACMode.HEAT, HVACMode.OFF]
 FAN_MODES_MANAGED = ["1", "2", "3", "4", "5"]
 
+PRESET_AUTO = "Auto"
+PRESET_1 = "P1"
+PRESET_2 = "P2"
+PRESET_3 = "P3"
+PRESET_4 = "P4"
+PRESET_5 = "P5"
+
+PRESET_MODES = [PRESET_AUTO, PRESET_1, PRESET_2, PRESET_3, PRESET_4, PRESET_5]
+PRESET_MODE_TO_POWER = {
+    "P1": 1,
+    "P2": 2,
+    "P3": 3,
+    "P4": 4,
+    "P5": 5,
+}
+
 async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_devices):
     """Add sensors for passed config_entry in HA."""
     coordinator = hass.data[DOMAIN]["coordinator"]
@@ -43,7 +59,10 @@ class EdilkaminClimateEntity(CoordinatorEntity, ClimateEntity):
         self._attr_fan1_modes = FAN_MODES_MANAGED
         # self._attr_fan_mode = "1"  # default fan speed
         self._attr_fan2_speed = None
-        self._attr_preset_mode = None
+        self._attr_preset_modes = PRESET_MODES
+        self._attr_preset_mode = PRESET_3
+        # self._attr_preset_mode = None
+        self._attr_hvac_modes = CLIMATE_HVAC_MODE_MANAGED
         self._attr_hvac_mode = HVACMode.OFF  # default hvac mode
         self.api = api
         self._mac_address = self.coordinator.get_mac_address()
@@ -73,21 +92,21 @@ class EdilkaminClimateEntity(CoordinatorEntity, ClimateEntity):
     #     """The current operation ."""
     #     return self._attr_hvac_mode
 
-    @property
-    def hvac_modes(self) -> list[HVACMode]:
-        """List of available operation modes."""
-        return CLIMATE_HVAC_MODE_MANAGED
+    # @property
+    # def hvac_modes(self) -> list[HVACMode]:
+    #     """List of available operation modes."""
+    #     return CLIMATE_HVAC_MODE_MANAGED
     
-    @property
-    def preset_mode(self):
-        """Return preset modes."""
-        return self._attr_preset_mode
+    # @property
+    # def preset_mode(self):
+    #     """Return preset modes."""
+    #     return self._attr_preset_mode
 
 
-    @property
-    def preset_modes(self):
-        """list preset modes."""
-        return ["1", "2", "3", "4", "5"]
+    # @property
+    # def preset_modes(self):
+    #     """list preset modes."""
+    #     return ["1", "2", "3", "4", "5"]
 
     @property
     def fan_mode(self):
@@ -115,14 +134,21 @@ class EdilkaminClimateEntity(CoordinatorEntity, ClimateEntity):
     @property
     def supported_features(self):
         """Bitmap of supported features"""
-        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.FAN_MODE 
+        return (
+                ClimateEntityFeature.TARGET_TEMPERATURE 
+                | ClimateEntityFeature.PRESET_MODE 
+                | ClimateEntityFeature.FAN_MODE 
+                | ClimateEntityFeature.TURN_ON
+                | ClimateEntityFeature.TURN_OFF
+                )
 
-    async def async_set_preset_mode(self, preset_mode):
+    async def async_set_preset_mode(self, preset_mode) -> None:
         """Set the preset mode of the power"""
-        
-        # self._attr_preset_mode = str(preset_mode)
-        
-        await self.api.set_power_level(int(preset_mode))
+        if preset_mode == PRESET_AUTO:
+            await self.api.enable_auto_mode()
+        else:
+            await self.api.disable_auto_mode()
+            await self.api.set_manual_power_level(PRESET_MODE_TO_POWER[preset_mode])
         await self.coordinator.async_refresh()
 
     async def async_set_fan_mode(self, fan_mode):
@@ -158,6 +184,13 @@ class EdilkaminClimateEntity(CoordinatorEntity, ClimateEntity):
             self._attr_hvac_mode = HVACMode.HEAT
         else:
             self._attr_hvac_mode = HVACMode.OFF
+
+        if self.coordinator.is_auto():
+            self._attr_preset_mode = PRESET_AUTO
+        else:
+            manual_power = self.coordinator.get_manual_power()
+            self._attr_preset_mode = PRESET_MODES[manual_power]
+
         self.async_write_ha_state()  
 
     # async def async_update(self) -> None:

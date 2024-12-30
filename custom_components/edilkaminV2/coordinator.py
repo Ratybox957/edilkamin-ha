@@ -166,3 +166,29 @@ class EdilkaminCoordinator(DataUpdateCoordinator):
     def get_autonomy_second(self) -> str:
         """Get the operational phase."""
         return self._device_info.get("status").get("pellet").get("autonomy_time")
+    
+    def get_standby_mode(self) -> bool:
+        """Get standby mode."""
+        return (
+            self._device_info.get("nvm").get("user_parameters").get("is_standby_active")
+        )
+
+    def get_standby_waiting_time(self) -> str:
+        """Get standby waiting time."""
+        return (
+            self._device_info.get("nvm")
+            .get("user_parameters")
+            .get("standby_waiting_time")
+        )
+
+    def get_power_ons(self) -> str:
+        """Get the number of power ons."""
+        return self._device_info.get("nvm").get("total_counters").get("power_ons")
+
+    def is_auto(self):
+        """Check if the device is in auto mode."""
+        return self._device_info.get("nvm").get("user_parameters").get("is_auto")
+
+    def get_manual_power(self):
+        """Get the manual mode."""
+        return self.get_power_actual_setpoint()

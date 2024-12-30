@@ -8,6 +8,7 @@ from typing import Any
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
@@ -46,6 +47,7 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
         EdilkaminActualPowerSensor(coordinator),
         EdilkaminOperationalSensor(coordinator),
         EdilkaminAutonomySensor(coordinator),
+        EdilkaminPowerOnsSensor(coordinator),
     ]
     
 
@@ -264,7 +266,7 @@ class EdilkaminOperationalSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_name = "Operational phase"
         self._attr_options = list(OPERATIONAL_STATES.values())
-        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
 
     @property
     def device_class(self):
@@ -301,7 +303,7 @@ class EdilkaminAutonomySensor(CoordinatorEntity, SensorEntity):
         self._mac_address = self.coordinator.get_mac_address()
 
         self._attr_name = "Autonomy"
-        self._attr_device_info = {"identifiers": {("edilkamin", self._mac_address)}}
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
         self._attr_icon = "mdi:timer"
 
         additional_att = {
@@ -335,4 +337,33 @@ class EdilkaminAutonomySensor(CoordinatorEntity, SensorEntity):
         # Convert seconds to minutes
         minutes, sec = divmod(autonomy_second, 60)
         self._state = f"{minutes}:{sec}"
+        self.async_write_ha_state()
+
+class EdilkaminPowerOnsSensor(CoordinatorEntity, SensorEntity):
+    """Representation of a Sensor."""
+
+    def __init__(self, coordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._state = self.coordinator.get_power_ons()
+        self._mac_address = self.coordinator.get_mac_address()
+
+        self._attr_name = "Power ons"
+        self._attr_device_info = {"identifiers": {("edilkaminv2", self._mac_address)}}
+        self._attr_icon = "mdi:counter"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+
+    @property
+    def unique_id(self):
+        """Return a unique_id for this entity."""
+        return f"{self._mac_address}_power_ons"
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return self._state
+
+    def _handle_coordinator_update(self) -> None:
+        """Fetch new state data for the sensor."""
+        self._state = self.coordinator.get_power_ons()
         self.async_write_ha_state()

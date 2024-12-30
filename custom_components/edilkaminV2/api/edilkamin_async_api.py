@@ -184,6 +184,36 @@ class EdilkaminAsyncApi:
         """Get the target temperature."""
         return (await self.get_info()).get("nvm").get("alarms_log").get("index")
 
+    async def enable_standby_mode(self):
+        """Set the standby mode."""
+        if not await self.is_auto():
+            raise NotInRightState("Standby mode is only available from auto mode.")
+
+        await self.execute_command({"name": "standby_mode", "value": True})
+
+    async def disable_standby_mode(self):
+        """Set the standby mode."""
+        if not await self.is_auto():
+            raise NotInRightState("Standby mode is only available from auto mode.")
+
+        await self.execute_command({"name": "standby_mode", "value": False})
+
+    async def is_auto(self):
+        """Check if the device is in auto mode."""
+        return (await self.get_info()).get("nvm").get("user_parameters").get("is_auto")
+
+    async def enable_auto_mode(self):
+        """Set the auto mode."""
+        await self.execute_command({"name": "auto_mode", "value": True})
+
+    async def disable_auto_mode(self):
+        """Set the auto mode."""
+        await self.execute_command({"name": "auto_mode", "value": False})
+
+    async def set_manual_power_level(self, value: int):
+        """Set the manual power level."""
+        await self.execute_command({"name": "power_level", "value": value})
+
     async def get_token(self):
         return await self._hass.async_add_executor_job(edilkamin.sign_in, self._username, self._password)
 
@@ -197,6 +227,7 @@ class EdilkaminAsyncApi:
             token,
             self._mac_address
         )
+
 
     async def execute_command(self, payload: typing.Dict) -> str:
         """
@@ -225,3 +256,11 @@ class HttpException(Exception):
 
         self.status_code = status_code
         self.text = text
+
+
+class EdilkaminApi(Exception):
+    """Base class for exceptions in this module."""
+
+
+class NotInRightState(EdilkaminApi):
+    """Exception raised when the device is not in the right state."""
